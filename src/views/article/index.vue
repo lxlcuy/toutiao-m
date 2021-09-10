@@ -6,13 +6,13 @@
 
     <div class="main-wrap">
       <!-- 加载中 -->
-      <div class="loading-wrap">
+      <div v-if="loading" class="loading-wrap">
         <van-loading color="#3296fa" vertical>加载中</van-loading>
       </div>
       <!-- /加载中 -->
 
       <!-- 加载完成-文章详情 -->
-      <div class="article-detail">
+      <div v-else-if="article.title" class="article-detail">
         <!-- 文章标题 -->
         <h1 class="article-title">{{ article.title }}</h1>
         <!-- /文章标题 -->
@@ -30,41 +30,41 @@
           <div slot="label" class="publish-date">
             {{ article.pubdate | relativeTime }}
           </div>
-          <van-button
+          <!-- <van-button
             class="follow-btn"
-            type="info"
             color="#3296fa"
             round
             size="small"
             icon="plus"
-            >关注</van-button
-          >
-          <!-- <van-button
-            class="follow-btn"
-            round
-            size="small"
-          >已关注</van-button> -->
+            >已关注</van-button
+          > -->
+          <!-- <follow-user :is-followed="article.is_followed" /> -->
+          <follow-user :is-followed="article.is_followed"></follow-user>
         </van-cell>
         <!-- /用户信息 -->
 
         <!-- 文章内容 -->
-        <div class="article-content" v-html="article.content"></div>
-        <van-divider>正文结束</van-divider>
+        <div
+          class="article-content"
+          v-html="article.content"
+          ref="article-content"
+        ></div>
+        <van-divider></van-divider>
       </div>
       <!-- /加载完成-文章详情 -->
 
       <!-- 加载失败：404 -->
-      <div class="error-wrap">
+      <div v-else-if="errStatus === 404" class="error-wrap">
         <van-icon name="failure" />
         <p class="text">该资源不存在或已删除！</p>
       </div>
       <!-- /加载失败：404 -->
 
       <!-- 加载失败：其它未知错误（例如网络原因或服务端异常） -->
-      <div class="error-wrap">
+      <div v-else class="error - wrap">
         <van-icon name="failure" />
         <p class="text">内容加载失败！</p>
-        <van-button class="retry-btn">点击重试</van-button>
+        <van-button @click="loadArticle" class="retry-btn">点击重试</van-button>
       </div>
       <!-- /加载失败：其它未知错误（例如网络原因或服务端异常） -->
     </div>
@@ -85,9 +85,15 @@
 
 <script>
 import { getArticlesById } from '../../api/article'
+import { ImagePreview } from 'vant'
+
+import FollowUser from '../../components/follow-user/follow-user.vue'
+
 export default {
   name: 'ArticleIndex',
-  components: {},
+  components: {
+    FollowUser
+  },
   props: {
     articleId: {
       type: [Number, String, Object],
@@ -96,7 +102,10 @@ export default {
   },
   data () {
     return {
-      article: {}
+      article: {},
+      loading: true,
+      errStatus: 0,
+      followLoading: false
     }
   },
   computed: {},
@@ -107,13 +116,39 @@ export default {
   mounted () {},
   methods: {
     async loadArticle () {
+      this.loading = true
       try {
         const data = await getArticlesById(this.articleId)
-        this.article = data.data
+        this.article = data.data.data
+        console.log(this.article)
+        setTimeout(() => {
+          // console.log(this.$refs['article-content'])
+          this.previewImage()
+        }, 0)
         // console.log(data)
       } catch (err) {
-        console.log('获取文章失败', err)
+        if (err.response && err.response.status === 404) {
+          this.errStatus = 404
+        }
       }
+      this.loading = false
+    },
+    previewImage () {
+      // 得到所有的img节点
+      const articleContent = this.$refs['article-content']
+      const imgs = articleContent.querySelectorAll('img')
+      const images = []
+      imgs.forEach((img, index) => {
+        images.push(img.src)
+        img.onclick = () => {
+          ImagePreview({
+            images,
+            // 其实未知cong 0开始
+            startPosition: index
+          })
+        }
+      })
+      // console.log(images)
     }
   }
 }
