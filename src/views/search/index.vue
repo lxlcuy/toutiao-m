@@ -1,98 +1,116 @@
-<!--  -->
 <template>
   <div class="search-container">
     <!-- 搜索栏 -->
-
-    <form action="/">
+    <!--
+      Tips: 在 van-search 外层增加 form 标签，且 action 不为空，即可在 iOS 输入法中显示搜索按钮
+     -->
+    <form class="search-form" action="/">
       <van-search
         v-model="searchText"
         show-action
         placeholder="请输入搜索关键词"
+        background="#3296fa"
         @search="onSearch"
         @cancel="onCancel"
-        background="#3296fa"
-        @focus="issearchTextShow = false"
+        @focus="isResultShow = false"
       />
     </form>
     <!-- /搜索栏 -->
+
     <!-- 搜索结果 -->
     <search-result
-      v-if="issearchTextShow"
+      v-if="isResultShow"
       :search-text="searchText"
-    ></search-result>
+    />
     <!-- /搜索结果 -->
 
     <!-- 联想建议 -->
     <search-suggestion
-      :search-text="searchText"
       v-else-if="searchText"
+      :search-text="searchText"
       @search="onSearch"
-    ></search-suggestion>
+    />
     <!-- /联想建议 -->
-    <!-- 搜索历史记录 -->
 
+    <!-- 搜索历史记录 -->
     <search-history
       v-else
       :search-histories="searchHistories"
-      @clear-update-search-histories="searchHistories = []"
+      @clear-search-histories="searchHistories = []"
       @search="onSearch"
-    ></search-history>
+    />
     <!-- /搜索历史记录 -->
   </div>
 </template>
-<script>
-import SearchHistory from './component/search-history.vue'
-import SearchResult from './component/search-result.vue'
-import SearchSuggestion from './component/search-suggest.vue'
-import { setItem, getItem } from '../../utils/storage'
-export default {
-  name: 'MySearch',
 
+<script>
+import SearchHistory from './components/search-history'
+import SearchSuggestion from './components/search-suggestion'
+import SearchResult from './components/search-result'
+import { setItem, getItem } from '@/utils/storage'
+
+export default {
+  name: 'SearchIndex',
+  components: {
+    SearchHistory,
+    SearchSuggestion,
+    SearchResult
+  },
+  props: {},
   data () {
     return {
       searchText: '',
-      issearchTextShow: false,
-      searchHistories: getItem('TOUTIAO_SEARCH_HISTORIES') || []
+      isResultShow: false, // 控制搜索结果的展示
+      searchHistories: getItem('TOUTIAO_SEARCH_HISTORIES') || [] // 搜索的历史记录数据
     }
   },
-  props: {},
-  components: { SearchHistory, SearchResult, SearchSuggestion },
-  created () {},
-  mounted () {},
+  computed: {},
   watch: {
     searchHistories (value) {
       setItem('TOUTIAO_SEARCH_HISTORIES', value)
     }
+    // searchHistories: {
+    //   handler () {}
+    // }
   },
+  created () {},
+  mounted () {},
   methods: {
     onSearch (val) {
       // 更新文本框内容
       this.searchText = val
+
       // 存储搜索历史记录
-      // 要求不要有重复记录，最新的排在前面
+      // 要求：不要有重复历史记录、最新的排在最前面
       const index = this.searchHistories.indexOf(val)
       if (index !== -1) {
         this.searchHistories.splice(index, 1)
       }
-      // 更新数组
-
       this.searchHistories.unshift(val)
-      // console.log(val)
-      this.issearchTextShow = true
+
+      // 渲染搜索结果
+      this.isResultShow = true
     },
+
     onCancel () {
       this.$router.back()
     }
   }
 }
 </script>
-<style lang="less">
+
+<style scoped lang="less">
 .search-container {
-  .search-container van-search {
-    margin-top: 10px;
-  }
+  padding-top: 108px;
   .van-search__action {
     color: #fff;
+  }
+  .search-form {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
   }
 }
 </style>

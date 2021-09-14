@@ -158,13 +158,11 @@ export default {
 
 <style scoped lang="less">
 .article-list {
-  // 百分比单位是相对于父元素的
-  // height: 100%;
-
-  // 视口（在移动端是布局视口）单位：vw 和 vh，不受父元素影响
-  // 1vw = 视口宽度的百分之一
-  // 1vh = 视口高度的百分之一
-  height: 79vh;
+  position: fixed;
+  top: 180px;
+  bottom: 100px;
   overflow-y: auto;
+  right: 0;
+  left: 0;
 }
 </style>
